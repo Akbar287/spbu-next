@@ -1,0 +1,1469 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ActivityLog {
+  activityLogId String    @id @default(uuid()) @map("activity_log_id")
+  memberId      String    @map("member_id")
+  namaAktivitas String    @map("nama_aktivitas")
+  class         String
+  function      String
+  input         String
+  output        String
+  createdAt     DateTime? @map("created_at")
+  updatedAt     DateTime? @map("updated_at")
+  member        Member    @relation(fields: [memberId], references: [memberId])
+
+  @@map("activity_log")
+}
+
+model AreaMember {
+  areaMemberId String    @id @default(uuid()) @map("area_member_id")
+  memberId     String    @map("member_id")
+  provinsi     String
+  kabupaten    String
+  kecamatan    String
+  desa         String
+  rw           String
+  rt           String
+  no           String
+  alamat       String
+  isPrimary    Boolean   @map("is_primary")
+  createdAt    DateTime? @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+  member       Member    @relation(fields: [memberId], references: [memberId])
+
+  @@map("area_member")
+}
+
+model Aset {
+  asetId            String     @id @default(uuid()) @map("aset_id")
+  spbuId            String     @map("spbu_id")
+  namaAset          String     @map("nama_aset")
+  jumlah            Int
+  tanggalDigunakan  DateTime   @map("tanggal_digunakan")
+  harga             Decimal    @db.Decimal(16, 6)
+  penyusutanPerHari Decimal    @map("penyusutan_per_hari") @db.Decimal(16, 2)
+  isDigunakan       Boolean    @map("is_digunakan")
+  keterangan        String
+  createdAt         DateTime?  @map("created_at")
+  updatedAt         DateTime?  @map("updated_at")
+  spbu              Spbu       @relation(fields: [spbuId], references: [spbuId])
+  fileAset          FileAset[]
+
+  @@map("aset")
+}
+
+model Bonus {
+  bonusId    String   @id @default(uuid()) @map("bonus_id")
+  memberId   String   @map("member_id")
+  persentase Int
+  totalBonus Decimal  @map("total_bonus") @db.Decimal(16, 2)
+  tanggal    DateTime
+  deksripsi  String?
+  member     Member   @relation(fields: [memberId], references: [memberId])
+
+  @@map("bonus")
+}
+
+model DetailGaji {
+  detailGajiId String     @id @default(uuid()) @map("detail_gaji_id")
+  gajiMemberId String     @map("gaji_member_id")
+  namaGaji     String     @map("nama_gaji")
+  type         String
+  total        Decimal    @db.Decimal(16, 6)
+  gajiMember   GajiMember @relation(fields: [gajiMemberId], references: [gajiMemberId])
+
+  @@map("detail_gaji")
+}
+
+model DetailPenjualan {
+  detailPenjualanId String     @id @default(uuid()) @map("detail_penjualan_id")
+  penjualanId       String     @map("penjualan_id")
+  standMeterId      String     @map("stand_meter_id")
+  hargaId           String     @map("harga_id")
+  liter             Decimal    @db.Decimal(16, 6)
+  totalDetailJual   Decimal    @map("total_detail_jual") @db.Decimal(16, 6)
+  createdAt         DateTime?  @map("created_at")
+  updatedAt         DateTime?  @map("updated_at")
+  isConfirmed       Boolean    @default(false) @map("is_confirmed")
+  Penjualan         Penjualan  @relation(fields: [penjualanId], references: [penjualanId])
+  StandMeter        StandMeter @relation(fields: [standMeterId], references: [standMeterId])
+  Harga             Harga      @relation(fields: [hargaId], references: [hargaId])
+
+  @@map("detail_penjualan")
+}
+
+model DetailProduk {
+  detailProdukId String @id @default(uuid()) @map("detail_produk_id")
+  produkId       String @map("produk_id")
+  namaJenis      String @map("nama_jenis")
+  oktan          Int
+  Produk         Produk @relation(fields: [produkId], references: [produkId])
+
+  @@map("detail_produk")
+}
+
+model DetailRencanaPembelian {
+  detailRencanaPembelianId  String                      @id @default(uuid()) @map("detail_rencana_pembelian_id")
+  rencanaPembelianId        String                      @map("rencana_pembelian_id")
+  produkId                  String                      @map("produk_id")
+  jumlah                    Decimal                     @db.Decimal(16, 6)
+  satuanJumlah              String                      @map("satuan_jumlah")
+  rit                       Decimal                     @db.Decimal(6, 2)
+  harga                     Decimal                     @db.Decimal(16, 6)
+  totalHarga                Decimal                     @map("total_harga") @db.Decimal(16, 6)
+  isConfirmation            Boolean                     @map("is_confirmation")
+  createdAt                 DateTime?                   @map("created_at")
+  updatedAt                 DateTime?                   @map("updated_at")
+  ms2                       Boolean
+  delivery                  Boolean
+  kodeDetail                String                      @unique @map("kode_detail")
+  RencanaPembelian          RencanaPembelian            @relation(fields: [rencanaPembelianId], references: [rencanaPembelianId])
+  Produk                    Produk                      @relation(fields: [produkId], references: [produkId])
+  DetailRencanaPembelianMs2 DetailRencanaPembelianMs2[]
+  DetailRencanaFile         DetailRencanaFile[]
+
+  @@map("detail_rencana_pembelian")
+}
+
+model DetailRencanaPembelianMs2 {
+  detailRencanaPembelianMs2Id String                 @id @default(uuid()) @map("detail_rencana_pembelian_ms2_id")
+  ms2Id                       String                 @map("ms2_id")
+  detailRencanaPembelianId    String                 @map("detail_rencana_pembelian_id")
+  isDelivery                  Boolean                @map("is_delivery")
+  createdAt                   DateTime?              @map("created_at")
+  updatedAt                   DateTime?              @map("updated_at")
+  jamKerjaId                  String?                @map("jam_kerja_id")
+  Ms2                         Ms2                    @relation(fields: [ms2Id], references: [ms2Id])
+  DetailRencanaPembelian      DetailRencanaPembelian @relation(fields: [detailRencanaPembelianId], references: [detailRencanaPembelianId])
+  JamKerja                    JamKerja?              @relation(fields: [jamKerjaId], references: [jamKerjaId])
+
+  @@map("detail_rencana_pembelian_ms2")
+}
+
+model DetailTera {
+  detailTeraId  String      @id @default(uuid()) @map("detail_tera_id")
+  dokumenStokId String      @map("dokumen_stok_id")
+  teraId        String      @map("tera_id")
+  quantity      Decimal     @db.Decimal(16, 6)
+  harga         Decimal     @db.Decimal(16, 6)
+  keterangan    String
+  createdAt     DateTime?   @map("created_at")
+  updatedAt     DateTime?   @map("updated_at")
+  DokumenStok   DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+  Tera          Tera        @relation(fields: [teraId], references: [teraId])
+
+  @@map("detail_tera")
+}
+
+model Devices {
+  devicesId     String      @id @default(uuid()) @map("devices_id")
+  penjadwalanId String      @map("penjadwalan_id")
+  ipv4          String
+  typeDevices   String      @map("type_devices")
+  modelDevices  String      @map("model_devices")
+  os            String
+  versiOs       String      @map("versi_os")
+  browser       String
+  versiBrowser  String      @map("versi_browser")
+  createdAt     DateTime?   @map("created_at")
+  updatedAt     DateTime?   @map("updated_at")
+  Penjadwalan   Penjadwalan @relation(fields: [penjadwalanId], references: [penjadwalanId])
+
+  @@map("devices")
+}
+
+model Dispenser {
+  dispenserId   String   @id @default(uuid()) @map("dispenser_id")
+  payungId      String   @map("payung_id")
+  namaDispenser String   @map("nama_dispenser")
+  keterangan    String?
+  isAktif       Boolean  @map("is_aktif")
+  Payung        Payung   @relation(fields: [payungId], references: [payungId])
+  Nozzle        Nozzle[]
+
+  @@map("dispenser")
+}
+
+model Divisi {
+  divisiId   String    @id @default(uuid()) @map("divisi_id")
+  spbuId     String    @map("spbu_id")
+  namaDivisi String    @map("nama_divisi")
+  keterangan String?
+  isAktif    Boolean   @map("is_aktif")
+  createdAt  DateTime? @map("created_at")
+  updatedAt  DateTime? @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  Spbu       Spbu      @relation(fields: [spbuId], references: [spbuId])
+  Level      Level[]
+
+  @@map("divisi")
+}
+
+model DokumenStok {
+  dokumenStokId        String                      @id @default(uuid()) @map("dokumen_stok_id")
+  stokInventoryId      String                      @map("stok_inventory_id")
+  memberId             String                      @map("member_id")
+  dombakId             String                      @map("dombak_id")
+  jamKerjaId           String                      @map("jam_kerja_id")
+  typeDokumenStokId    String                      @map("type_dokumen_stok_id")
+  tanggal              DateTime
+  stokAwal             Decimal                     @map("stok_awal") @db.Decimal(16, 6)
+  stokAkhir            Decimal                     @map("stok_akhir") @db.Decimal(16, 6)
+  isConfirmation       Boolean                     @map("is_confirmation")
+  createdAt            DateTime?                   @map("created_at")
+  updatedAt            DateTime?                   @map("updated_at")
+  StokInventory        StokInventory               @relation(fields: [stokInventoryId], references: [stokInventoryId])
+  Member               Member                      @relation(fields: [memberId], references: [memberId])
+  Dombak               Dombak                      @relation(fields: [dombakId], references: [dombakId])
+  JamKerja             JamKerja                    @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  TypeDokumenStok      TypeDokumenStok             @relation(fields: [typeDokumenStokId], references: [typeDokumenStokId])
+  DetailTera           DetailTera[]
+  FileDokumenStok      FileDokumenStok[]
+  Konversi             KonversiDokumenStok[]
+  Losses               Losses[]
+  Penerimaan           Penerimaan[]
+  PenerimaanStokTaking PenerimaanStokTaking[]
+  DombakTransfer       DombakTransferDokumenStok[]
+  StandMeter           StandMeterDokumenStok[]
+
+  @@map("dokumen_stok")
+}
+
+model Dombak {
+  dombakId            String                @id @default(uuid()) @map("dombak_id")
+  spbuId              String                @map("spbu_id")
+  namaDombak          String                @map("nama_dombak")
+  keterangan          String?
+  isAktif             Boolean               @map("is_aktif")
+  Spbu                Spbu                  @relation(fields: [spbuId], references: [spbuId])
+  DokumenStok         DokumenStok[]
+  Konversi            Konversi[]
+  StandMeter          StandMeter[]
+  StokInventoryDombak StokInventoryDombak[]
+  Payung              DombakPayung[]
+
+  @@map("dombak")
+}
+
+model DombakTransfer {
+  dombakTransferId String                      @id @default(uuid()) @map("dombak_transfer_id")
+  produkId         String                      @map("produk_id")
+  jamKerjaId       String                      @map("jam_kerja_id")
+  tanggal          DateTime
+  isConfirmation   Boolean                     @map("is_confirmation")
+  createdAt        DateTime?                   @map("created_at")
+  updatedAt        DateTime?                   @map("updated_at")
+  Produk           Produk                      @relation(fields: [produkId], references: [produkId])
+  JamKerja         JamKerja                    @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  DokumenStok      DombakTransferDokumenStok[]
+
+  @@map("dombak_transfer")
+}
+
+model Fasilitas {
+  fasilitasId      String          @id @default(uuid()) @map("fasilitas_id")
+  spbuId           String          @map("spbu_id")
+  namaFasilitas    String          @map("nama_fasilitas")
+  jumlah           Int
+  tanggalDigunakan DateTime        @map("tanggal_digunakan")
+  keterangan       String
+  createdAt        DateTime?       @map("created_at")
+  updatedAt        DateTime?       @map("updated_at")
+  Spbu             Spbu            @relation(fields: [spbuId], references: [spbuId])
+  FileFasilitas    FileFasilitas[]
+
+  @@map("fasilitas")
+}
+
+model FileAset {
+  fileAsetId    String   @id @default(uuid()) @map("file_aset_id")
+  asetId        String   @map("aset_id")
+  namaFile      String   @map("nama_file")
+  namaDokumen   String   @map("nama_dokumen")
+  tanggalUpload DateTime @map("tanggal_upload")
+  createdAt     DateTime @map("created_at")
+  updatedAt     DateTime @map("updated_at")
+  Aset          Aset     @relation(fields: [asetId], references: [asetId])
+
+  @@map("file_aset")
+}
+
+model FileDokumenStok {
+  fileDokumenStokId String      @id @default(uuid()) @map("file_dokumen_stok_id")
+  dokumenStokId     String      @map("dokumen_stok_id")
+  namaFile          String      @map("nama_file")
+  namaDokumen       String      @map("nama_dokumen")
+  tanggalUpload     DateTime    @map("tanggal_upload")
+  createdAt         DateTime    @map("created_at")
+  updatedAt         DateTime    @map("updated_at")
+  DokumenStok       DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+
+  @@map("file_dokumen_stok")
+}
+
+model FileFasilitas {
+  fileFasilitasId String    @id @default(uuid()) @map("file_fasilitas_id")
+  fasilitasId     String    @map("fasilitas_id")
+  namaFile        String    @map("nama_file")
+  namaDokumen     String    @map("nama_dokumen")
+  tanggalUpload   DateTime  @map("tanggal_upload")
+  createdAt       DateTime  @map("created_at")
+  updatedAt       DateTime  @map("updated_at")
+  Fasilitas       Fasilitas @relation(fields: [fasilitasId], references: [fasilitasId])
+
+  @@map("file_fasilitas")
+}
+
+model FileLampiranLo {
+  fileLampiranLoId String   @id @default(uuid()) @map("file_lampiran_lo_id")
+  fileLoId         String   @map("file_lo_id")
+  namaFile         String   @map("nama_file")
+  namaDokumen      String   @map("nama_dokumen")
+  tanggalUpload    DateTime @map("tanggal_upload")
+  FileLo           FileLo   @relation(fields: [fileLoId], references: [fileLoId])
+
+  @@map("file_lampiran_lo")
+}
+
+model FileLo {
+  fileLoId               String              @id @default(uuid()) @map("file_lo_id")
+  pengirimanId           String              @map("pengiriman_id")
+  produkId               String              @map("produk_id")
+  jumlah                 Decimal             @map("jumlah") @db.Decimal(16, 6)
+  satuanJumlah           String              @map("satuan_jumlah")
+  noFaktur               String              @map("no_faktur")
+  noLo                   String              @map("no_lo")
+  namaDokumen            String              @map("nama_dokumen")
+  namaFile               String              @map("nama_file")
+  tanggalUpload          DateTime            @map("tanggal_upload")
+  createdAt              DateTime            @map("created_at")
+  updatedAt              DateTime            @map("updated_at")
+  Pengiriman             Pengiriman          @relation(fields: [pengirimanId], references: [pengirimanId])
+  Produk                 Produk              @relation(fields: [produkId], references: [produkId])
+  FileLampiranLo         FileLampiranLo[]
+  Penerimaan             Penerimaan[]
+  DetailRencanaPembelian DetailRencanaFile[]
+  Segel                  Segel[]
+
+  @@map("file_lo")
+}
+
+model FilePembayaran {
+  filePembayaranId String     @id @default(uuid()) @map("file_pembayaran_id")
+  pembayaranId     String     @map("pembayaran_id")
+  namaFile         String     @map("nama_file")
+  namaDokumen      String     @map("nama_dokumen")
+  tanggalUpload    DateTime   @map("tanggal_upload")
+  createdAt        DateTime   @map("created_at")
+  updatedAt        DateTime   @map("updated_at")
+  Pembayaran       Pembayaran @relation(fields: [pembayaranId], references: [pembayaranId])
+
+  @@map("file_pembayaran")
+}
+
+model FilePenarikan {
+  filePenarikanId String    @id @default(uuid()) @map("file_penarikan_id")
+  penarikanId     String    @map("penarikan_id")
+  tanggal         DateTime  @map("tanggal")
+  namaFile        String    @map("nama_file")
+  namaDokumen     String    @map("nama_dokumen")
+  keterangan      String?   @map("keterangan")
+  createdAt       DateTime  @map("created_at")
+  updatedAt       DateTime  @map("updated_at")
+  Penarikan       Penarikan @relation(fields: [penarikanId], references: [penarikanId])
+
+  @@map("file_penarikan")
+}
+
+model FilePenerimaan {
+  filePenerimaanId String     @id @default(uuid()) @map("file_penerimaan_id")
+  penerimaanId     String     @map("penerimaan_id")
+  namaFile         String     @map("nama_file")
+  namaDokumen      String     @map("nama_dokumen")
+  tanggalUpload    DateTime   @map("tanggal_upload")
+  Penerimaan       Penerimaan @relation(fields: [penerimaanId], references: [penerimaanId])
+
+  @@map("file_penerimaan")
+}
+
+model FilePettyCash {
+  filePettyCashId String    @id @default(uuid()) @map("file_petty_cash_id")
+  pettyCashId     String    @map("petty_cash_id")
+  namaFile        String    @map("nama_file")
+  namaDokumen     String    @map("nama_dokumen")
+  tanggalUpload   DateTime  @map("tanggal_upload")
+  PettyCash       PettyCash @relation(fields: [pettyCashId], references: [pettyCashId])
+
+  @@map("file_petty_cash")
+}
+
+model FilePost {
+  filePostId  String   @id @default(uuid()) @map("file_post_id")
+  postId      String   @map("post_id")
+  namaFile    String   @map("nama_file")
+  namaDokumen String   @map("nama_dokumen")
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+  Post        Post     @relation(fields: [postId], references: [postId])
+
+  @@map("file_post")
+}
+
+model FileStandMeter {
+  fileStandMeterId String     @id @default(uuid()) @map("file_stand_meter_id")
+  standMeterId     String     @map("stand_meter_id")
+  namaFile         String     @map("nama_file")
+  namaDokumen      String     @map("nama_dokumen")
+  tanggalUpload    DateTime   @map("tanggal_upload")
+  createdAt        DateTime   @map("created_at")
+  updatedAt        DateTime   @map("updated_at")
+  StandMeter       StandMeter @relation(fields: [standMeterId], references: [standMeterId])
+
+  @@map("file_stand_meter")
+}
+
+model Gaji {
+  gajiId         String       @id @default(uuid()) @map("gaji_id")
+  jabatanId      String       @map("jabatan_id")
+  tanggalBerlaku DateTime     @map("tanggal_berlaku")
+  totalGaji      Decimal      @map("total_gaji") @db.Decimal(16, 6)
+  potonganPajak  Decimal      @map("potongan_pajak") @db.Decimal(16, 6)
+  keterangan     String?
+  isAktif        Boolean      @map("is_aktif")
+  createdAt      DateTime     @map("created_at")
+  updatedAt      DateTime     @map("updated_at")
+  Jabatan        Jabatan      @relation(fields: [jabatanId], references: [jabatanId])
+  GajiMember     GajiMember[]
+
+  @@map("gaji")
+}
+
+model GajiMember {
+  gajiMemberId    String       @id @default(uuid()) @map("gaji_member_id")
+  gajiId          String       @map("gaji_id")
+  memberId        String       @map("member_id")
+  tanggal         DateTime
+  totalGajiBersih Decimal      @map("total_gaji_bersih") @db.Decimal(16, 6)
+  Gaji            Gaji         @relation(fields: [gajiId], references: [gajiId])
+  Member          Member       @relation(fields: [memberId], references: [memberId])
+  DetailGaji      DetailGaji[]
+
+  @@map("gaji_member")
+}
+
+model Harga {
+  hargaId         String            @id @default(uuid()) @map("harga_id")
+  produkId        String            @map("produk_id")
+  jamKerjaId      String            @map("jam_kerja_id")
+  tanggal         DateTime
+  hargaJual       Decimal           @map("harga_jual") @db.Decimal(16, 6)
+  hargaBeli       Decimal           @map("harga_beli") @db.Decimal(16, 6)
+  isDefault       Boolean           @map("is_default")
+  createdAt       DateTime          @map("created_at")
+  updatedAt       DateTime          @map("updated_at")
+  Produk          Produk            @relation(fields: [produkId], references: [produkId])
+  JamKerja        JamKerja          @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  DetailPenjualan DetailPenjualan[]
+
+  @@map("harga")
+}
+
+model Hari {
+  hariId     String         @id @default(uuid()) @map("hari_id")
+  namaHari   String         @map("nama_hari")
+  hariKerja  Boolean        @map("hari_kerja")
+  keterangan String?
+  JamKerja   HariJamKerja[]
+
+  @@map("hari")
+}
+
+model ImageSelfie {
+  imageSelfieId String      @id @default(uuid()) @map("image_selfie_id")
+  penjadwalanId String      @map("penjadwalan_id")
+  namaFile      String      @map("nama_file")
+  Penjadwalan   Penjadwalan @relation(fields: [penjadwalanId], references: [penjadwalanId])
+
+  @@map("image_selfie")
+}
+
+model Jabatan {
+  jabatanId            String                 @id @default(uuid()) @map("jabatan_id")
+  levelId              String                 @map("level_id")
+  namaJabatan          String                 @map("nama_jabatan")
+  keterangan           String?
+  isAktif              Boolean                @map("is_aktif")
+  createdAt            DateTime               @map("created_at")
+  updatedAt            DateTime               @map("updated_at")
+  deletedAt            DateTime?              @map("deleted_at")
+  Level                Level                  @relation(fields: [levelId], references: [levelId])
+  Member               JabatanMember[]
+  Gaji                 Gaji[]
+  Penjadwalan          Penjadwalan[]
+  PjOperasionalSetoran PjOperasionalSetoran[]
+
+  @@map("jabatan")
+}
+
+model JamKerja {
+  jamKerjaId                String                      @id @default(uuid()) @map("jam_kerja_id")
+  spbuId                    String                      @map("spbu_id")
+  namaJamKerja              String                      @map("nama_jam_kerja")
+  batasAwalIn               DateTime                    @map("batas_awal_in")
+  batasAkhirIn              DateTime                    @map("batas_akhir_in")
+  jamDatangIn               DateTime                    @map("jam_datang_in")
+  jamPulangOut              DateTime                    @map("jam_pulang_out")
+  akhirOut                  DateTime                    @map("akhir_out")
+  jamIstirahat              DateTime                    @map("jam_istirahat")
+  masukIstirahat            DateTime                    @map("masuk_istirahat")
+  batasTelat                DateTime                    @map("batas_telat")
+  createdAt                 DateTime                    @map("created_at")
+  updatedAt                 DateTime                    @map("updated_at")
+  urutan                    Int
+  Spbu                      Spbu                        @relation(fields: [spbuId], references: [spbuId])
+  Hari                      HariJamKerja[]
+  Harga                     Harga[]
+  DetailRencanaPembelianMs2 DetailRencanaPembelianMs2[]
+  DokumenStok               DokumenStok[]
+  DombakTransfer            DombakTransfer[]
+  Penjadwalan               Penjadwalan[]
+  Penjualan                 Penjualan[]
+  Presensi                  Presensi[]
+  StandMeter                StandMeter[]
+
+  @@map("jam_kerja")
+}
+
+model JenisLosses {
+  jenisLossesId String   @id @default(uuid()) @map("jenis_losses_id")
+  jenisLoss     String   @map("jenis_loss")
+  deskripsi     String
+  Losses        Losses[]
+
+  @@map("jenis_losses")
+}
+
+model Kategori {
+  kategoriId   String         @id @default(uuid()) @map("kategori_id")
+  namaKategori String         @map("nama_kategori")
+  detail       String
+  Post         KategoriPost[]
+
+  @@map("kategori")
+}
+
+model Konversi {
+  konversiId         String                @id @default(uuid()) @map("konversi_id")
+  satuanUkurTinggiId String                @map("satuan_ukur_tinggi_id")
+  satuanUkurVolumeId String                @map("satuan_ukur_volume_id")
+  dombakId           String                @map("dombak_id")
+  tinggi             Decimal               @db.Decimal(16, 6)
+  volume             Decimal               @db.Decimal(16, 6)
+  SatuanUkurTinggi   SatuanUkurTinggi      @relation(fields: [satuanUkurTinggiId], references: [satuanUkurTinggiId])
+  SatuanUkurVolume   SatuanUkurVolume      @relation(fields: [satuanUkurVolumeId], references: [satuanUkurVolumeId])
+  Dombak             Dombak                @relation(fields: [dombakId], references: [dombakId])
+  DokumenStok        KonversiDokumenStok[]
+
+  @@map("konversi")
+}
+
+model Ktp {
+  ktpId        String    @id @default(uuid()) @map("ktp_id")
+  nik          String
+  nama         String
+  jenisKelamin String    @map("jenis_kelamin")
+  tempatLahir  String    @map("tempat_lahir")
+  tanggalLahir DateTime  @map("tanggal_lahir")
+  verified     Boolean
+  createdAt    DateTime  @map("created_at")
+  updatedAt    DateTime  @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  Member       Member?
+
+  @@map("ktp")
+}
+
+model Level {
+  levelId    String    @id @default(uuid()) @map("level_id")
+  divisiId   String    @map("divisi_id")
+  namaLevel  String    @map("nama_level")
+  keterangan String?
+  isAktif    Boolean   @map("is_aktif")
+  createdAt  DateTime  @map("created_at")
+  updatedAt  DateTime  @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+  Divisi     Divisi    @relation(fields: [divisiId], references: [divisiId])
+  Jabatan    Jabatan[]
+
+  @@map("level")
+}
+
+model Location {
+  locationId    String      @id @default(uuid()) @map("location_id")
+  penjadwalanId String      @map("penjadwalan_id")
+  lattitude     Decimal     @db.Decimal(8, 6)
+  longitude     Decimal     @db.Decimal(9, 6)
+  gmt           Int         @db.SmallInt
+  deskripsi     String?
+  createdAt     DateTime    @map("created_at")
+  updatedAt     DateTime    @map("updated_at")
+  Penjadwalan   Penjadwalan @relation(fields: [penjadwalanId], references: [penjadwalanId])
+
+  @@map("location")
+}
+
+model Losses {
+  lossesId      String      @id @default(uuid()) @map("losses_id")
+  jenisLossesId String      @map("jenis_losses_id")
+  dokumenStokId String      @map("dokumen_stok_id")
+  tanggal       DateTime
+  simbol        String
+  jumlah        Decimal     @db.Decimal(16, 6)
+  createdAt     DateTime    @map("created_at")
+  updatedAt     DateTime    @map("updated_at")
+  JenisLosses   JenisLosses @relation(fields: [jenisLossesId], references: [jenisLossesId])
+  DokumenStok   DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+
+  @@map("losses")
+}
+
+model Member {
+  memberId             String                 @id @default(uuid()) @map("member_id")
+  ktpId                String                 @unique @map("ktp_id")
+  statusMemberId       String                 @map("status_member_id")
+  email                String                 @unique
+  noHp                 String?                @map("no_hp")
+  noWa                 String?                @map("no_wa")
+  avatar               String
+  bergabungSejak       DateTime               @map("bergabung_sejak")
+  createdAt            DateTime               @map("created_at")
+  updatedAt            DateTime               @map("updated_at")
+  deletedAt            DateTime?              @map("deleted_at")
+  Ktp                  Ktp                    @relation(fields: [ktpId], references: [ktpId])
+  StatusMember         StatusMember           @relation(fields: [statusMemberId], references: [statusMemberId])
+  Jabatan              JabatanMember[]
+  GajiMember           GajiMember[]
+  ActivityLog          ActivityLog[]
+  AreaMember           AreaMember[]
+  Bonus                Bonus[]
+  DokumenStok          DokumenStok[]
+  Ms2                  Ms2[]
+  Notifikasi           Notifikasi[]
+  Pembayaran           Pembayaran[]
+  Penarikan            Penarikan[]
+  Pengiriman           Pengiriman[]
+  Penjadwalan          Penjadwalan[]
+  PenjualanPenarikan   PenjualanPenarikan[]
+  PjOperasionalSetoran PjOperasionalSetoran[]
+  Post                 Post[]
+  Presensi             Presensi[]
+  RencanaPembelian     RencanaPembelian[]
+  Spbu                 SpbuMember[]
+  Userlogin            Userlogin[]
+
+  @@map("member")
+}
+
+model MesinPresensi {
+  mesinPresensiId String     @id @default(uuid()) @map("mesin_presensi_id")
+  namaMesin       String     @map("nama_mesin")
+  tipeKoneksi     String?    @map("tipe_koneksi")
+  ipAddress       String?    @map("ip_address")
+  comPort         String?    @map("com_port")
+  createdAt       DateTime   @map("created_at")
+  updatedAt       DateTime   @map("updated_at")
+  Presensi        Presensi[]
+
+  @@map("mesin_presensi")
+}
+
+model Ms2 {
+  ms2Id                     String                      @id @default(uuid()) @map("ms2_id")
+  memberId                  String                      @map("member_id")
+  tanggal                   DateTime
+  kodeSms                   String?                     @map("kode_sms")
+  isDone                    Boolean                     @map("is_done")
+  createdAt                 DateTime                    @map("created_at")
+  updatedAt                 DateTime                    @map("updated_at")
+  Member                    Member                      @relation(fields: [memberId], references: [memberId])
+  Pengiriman                PengirimanMs2[]
+  DetailRencanaPembelianMs2 DetailRencanaPembelianMs2[]
+
+  @@map("ms2")
+}
+
+model Notifikasi {
+  notifikasiId String   @id @default(uuid()) @map("notifikasi_id")
+  memberId     String   @map("member_id")
+  judul        String
+  content      String
+  isRead       Boolean  @map("is_read")
+  createdAt    DateTime @map("created_at")
+  updatedAt    DateTime @map("updated_at")
+  Member       Member   @relation(fields: [memberId], references: [memberId])
+
+  @@map("notifikasi")
+}
+
+model Nozzle {
+  nozzleId    String              @id @default(uuid()) @map("nozzle_id")
+  dispenserId String              @map("dispenser_id")
+  produkId    String              @map("produk_id")
+  namaNozzle  String              @map("nama_nozzle")
+  keterangan  String?
+  isAktif     Boolean             @map("is_aktif")
+  Dispenser   Dispenser           @relation(fields: [dispenserId], references: [dispenserId])
+  Produk      Produk              @relation(fields: [produkId], references: [produkId])
+  Penjadwalan PenjadwalanNozzle[]
+  StandMeter  StandMeter[]
+
+  @@map("nozzle")
+}
+
+model PajakPembelian {
+  pajakPembelianId    String            @id @default(uuid()) @map("pajak_pembelian_id")
+  rencanaPembelianId  String            @map("rencana_pembelian_id")
+  netPrice            Decimal           @map("net_price") @db.Decimal(16, 6)
+  ppn                 Decimal           @db.Decimal(16, 6)
+  ppbkb               Decimal?          @db.Decimal(16, 6)
+  pph                 Decimal?          @db.Decimal(16, 6)
+  totalAmount         Decimal?          @map("total_amount") @db.Decimal(16, 6)
+  createdAt           DateTime          @map("created_at")
+  updatedAt           DateTime          @map("updated_at")
+  pajakPembelianLibId String            @map("pajak_pembelian_lib_id")
+  RencanaPembelian    RencanaPembelian  @relation(fields: [rencanaPembelianId], references: [rencanaPembelianId])
+  PajakPembelianLib   PajakPembelianLib @relation(fields: [pajakPembelianLibId], references: [pajakPembelianLibId])
+
+  @@map("pajak_pembelian")
+}
+
+model PajakPembelianLib {
+  pajakPembelianLibId String           @id @default(uuid()) @map("pajak_pembelian_lib_id")
+  ppn                 Float
+  ppbkb               Float
+  pph                 Float
+  createdAt           DateTime         @map("created_at")
+  updatedAt           DateTime         @map("updated_at")
+  isAktif             Boolean          @map("is_aktif")
+  PajakPembelian      PajakPembelian[]
+
+  @@map("pajak_pembelian_lib")
+}
+
+model PasswordResetTokens {
+  passwordResetTokenId String   @id @default(uuid()) @map("password_reset_token_id")
+  email                String   @map("email")
+  token                String
+  createdAt            DateTime @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+
+model Payung {
+  payungId   String         @id @default(uuid()) @map("payung_id")
+  spbuId     String         @map("spbu_id")
+  namaPayung String         @map("nama_payung")
+  keterangan String?
+  isAktif    Boolean        @map("is_aktif")
+  Spbu       Spbu           @relation(fields: [spbuId], references: [spbuId])
+  Dispenser  Dispenser[]
+  Dombak     DombakPayung[]
+
+  @@map("payung")
+}
+
+model Pembayaran {
+  pembayaranId        String           @id @default(uuid()) @map("pembayaran_id")
+  rencanaPembelianId  String           @map("rencana_pembelian_id")
+  memberId            String           @map("member_id")
+  tanggal             DateTime         @map("tanggal")
+  noCekBg             String           @map("no_cek_bg")
+  noRekening          String           @map("no_rekening")
+  namaRekening        String           @map("nama_rekening")
+  totalSetoran        Decimal          @map("total_setoran") @db.Decimal(18, 6)
+  isConfirmationAdmin Boolean          @map("is_confirmation_admin")
+  isConfirmationTop   Boolean          @map("is_confirmation_top")
+  createdAt           DateTime         @map("created_at")
+  updatedAt           DateTime         @map("updated_at")
+  RencanaPembelian    RencanaPembelian @relation(fields: [rencanaPembelianId], references: [rencanaPembelianId])
+  Member              Member           @relation(fields: [memberId], references: [memberId])
+  FilePembayaran      FilePembayaran[]
+
+  @@map("pembayaran")
+}
+
+model Penarikan {
+  penarikanId    String          @id @default(uuid()) @map("penarikan_id")
+  penjualanId    String          @map("penjualan_id")
+  tanggal        DateTime        @map("tanggal")
+  namaBank       String          @map("nama_bank")
+  noReferensi    String          @map("no_referensi")
+  metodeTransfer String          @map("metode_transfer")
+  isAccepted     Boolean         @map("is_accepted")
+  createdAt      DateTime        @map("created_at")
+  updatedAt      DateTime        @map("updated_at")
+  memberId       String          @map("member_id")
+  totalUang      Decimal         @map("total_uang") @db.Decimal(16, 6)
+  Penjualan      Penjualan       @relation(fields: [penjualanId], references: [penjualanId])
+  Member         Member          @relation(fields: [memberId], references: [memberId])
+  FilePenarikan  FilePenarikan[]
+
+  @@map("penarikan")
+}
+
+model Penerimaan {
+  penerimaanId         String                 @id @default(uuid()) @map("penerimaan_id")
+  fileLoId             String                 @map("file_lo_id")
+  dokumenStokId        String                 @map("dokumen_stok_id")
+  tanggal              DateTime               @map("tanggal")
+  createdAt            DateTime               @map("created_at")
+  updatedAt            DateTime               @map("updated_at")
+  FileLo               FileLo                 @relation(fields: [fileLoId], references: [fileLoId])
+  DokumenStok          DokumenStok            @relation(fields: [dokumenStokId], references: [dokumenStokId])
+  FilePenerimaan       FilePenerimaan[]
+  PenerimaanStokTaking PenerimaanStokTaking[]
+  PettyCash            PenerimaanPettyCash[]
+
+  @@map("penerimaan")
+}
+
+model PenerimaanStokTaking {
+  penerimaanStokTakingId String      @id @default(uuid()) @map("penerimaan_stok_taking_id")
+  penerimaanId           String      @map("penerimaan_id")
+  dokumenStokId          String      @map("dokumen_stok_id")
+  Penerimaan             Penerimaan  @relation(fields: [penerimaanId], references: [penerimaanId])
+  DokumenStok            DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+
+  @@map("penerimaan_stok_taking")
+}
+
+model Pengiriman {
+  pengirimanId        String          @id @default(uuid()) @map("pengiriman_id")
+  memberId            String          @map("member_id")
+  tanggal             DateTime        @map("tanggal")
+  noDo                String?         @map("no_do")
+  noPol               String          @map("no_pol")
+  isConfirmationAdmin Boolean         @map("is_confirmation_admin")
+  isDone              Boolean         @map("is_done")
+  isConfirmationTop   Boolean         @map("is_confirmation_top")
+  catatan             String?
+  Member              Member          @relation(fields: [memberId], references: [memberId])
+  FileLo              FileLo[]
+  Supir               Supir[]
+  Ms2                 PengirimanMs2[]
+
+  @@map("pengiriman")
+}
+
+model Penjadwalan {
+  penjadwalanId       String                @id @default(uuid()) @map("penjadwalan_id")
+  statusKehadiranId   String                @map("status_kehadiran_id")
+  jabatanId           String                @map("jabatan_id")
+  memberId            String                @map("member_id")
+  jamKerjaId          String                @map("jam_kerja_id")
+  tanggal             DateTime              @map("tanggal")
+  deskripsi           String?
+  attended            DateTime?
+  isAttended          Boolean               @default(false) @map("is_attended")
+  isConfirm           Boolean               @default(false) @map("is_confirm")
+  createdAt           DateTime              @map("created_at")
+  updatedAt           DateTime              @map("updated_at")
+  startTime           DateTime?             @map("start_time")
+  finishTime          DateTime?             @map("finish_time")
+  kodePenjadwalan     String                @unique @map("kode_penjadwalan")
+  StatusKehadiran     StatusKehadiran       @relation(fields: [statusKehadiranId], references: [statusKehadiranId])
+  Jabatan             Jabatan               @relation(fields: [jabatanId], references: [jabatanId])
+  Member              Member                @relation(fields: [memberId], references: [memberId])
+  JamKerja            JamKerja              @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  Devices             Devices[]
+  ImageSelfie         ImageSelfie[]
+  Location            Location[]
+  RandomStringBarcode RandomStringBarcode[]
+  Nozzle              PenjadwalanNozzle[]
+
+  @@map("penjadwalan")
+}
+
+model Penjualan {
+  penjualanId          String                 @id @default(uuid()) @map("penjualan_id")
+  spbuId               String                 @map("spbu_id")
+  jamKerjaId           String                 @map("jam_kerja_id")
+  tanggal              DateTime               @map("tanggal")
+  totalPenjualan       Decimal                @map("total_penjualan") @db.Decimal(16, 6)
+  totalUangKotak       Decimal                @map("total_uang_kotak") @db.Decimal(16, 6)
+  createdAt            DateTime               @map("created_at")
+  updatedAt            DateTime               @map("updated_at")
+  statusSetoranId      String                 @map("status_setoran_id")
+  isAcceptedAdmin      Boolean                @map("is_accepted_admin")
+  isAcceptedTop        Boolean                @map("is_accepted_top")
+  Spbu                 Spbu                   @relation(fields: [spbuId], references: [spbuId])
+  JamKerja             JamKerja               @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  StatusSetoran        StatusSetoran          @relation(fields: [statusSetoranId], references: [statusSetoranId])
+  DetailPenjualan      DetailPenjualan[]
+  Penarikan            Penarikan[]
+  PenjualanPenarikan   PenjualanPenarikan[]
+  PjOperasionalSetoran PjOperasionalSetoran[]
+
+  @@map("penjualan")
+}
+
+model PenjualanPenarikan {
+  pejualanPenarikanId String    @id @default(uuid()) @map("pejualan_penarikan_id")
+  penjualanId         String    @map("penjualan_id")
+  memberId            String    @map("member_id")
+  totalTarikan        Decimal   @map("total_tarikan") @db.Decimal(16, 2)
+  Penjualan           Penjualan @relation(fields: [penjualanId], references: [penjualanId])
+  Member              Member    @relation(fields: [memberId], references: [memberId])
+
+  @@map("penjualan_penarikan")
+}
+
+model PettyCash {
+  pettyCashId   String                @id @default(uuid()) @map("petty_cash_id")
+  spbuId        String                @map("spbu_id")
+  noKode        String                @map("no_kode")
+  noBukti       String                @map("no_bukti")
+  keterangan    String
+  jumlah        Decimal               @db.Decimal(16, 6)
+  jenis         String
+  tanggal       DateTime              @map("tanggal")
+  createdAt     DateTime              @map("created_at")
+  updatedAt     DateTime              @map("updated_at")
+  deletedAt     DateTime?             @map("deleted_at")
+  Spbu          Spbu                  @relation(fields: [spbuId], references: [spbuId])
+  FilePettyCash FilePettyCash[]
+  Penerimaan    PenerimaanPettyCash[]
+  Tera          TeraPettyCash[]
+
+  @@map("petty_cash")
+}
+
+model PjOperasionalSetoran {
+  pjOperasionalSetoranId String    @id @default(uuid()) @map("pj_operasional_setoran_id")
+  penjualanId            String    @map("penjualan_id")
+  jabatanId              String    @map("jabatan_id")
+  memberId               String    @map("member_id")
+  Penjualan              Penjualan @relation(fields: [penjualanId], references: [penjualanId])
+  Jabatan                Jabatan   @relation(fields: [jabatanId], references: [jabatanId])
+  Member                 Member    @relation(fields: [memberId], references: [memberId])
+
+  @@map("pj_operasional_setoran")
+}
+
+model Post {
+  postId    String         @id @default(uuid()) @map("post_id")
+  memberId  String         @map("member_id")
+  title     String
+  content   String
+  active    Boolean
+  createdAt DateTime       @map("created_at")
+  updatedAt DateTime       @map("updated_at")
+  deletedAt DateTime?      @map("deleted_at")
+  Member    Member         @relation(fields: [memberId], references: [memberId])
+  FilePost  FilePost[]
+  Kategori  KategoriPost[]
+  Tag       TagPost[]
+
+  @@map("post")
+}
+
+model Presensi {
+  presensiId       String         @id @default(uuid()) @map("presensi_id")
+  statusPresensiId String         @map("status_presensi_id")
+  mesinPresensiId  String         @map("mesin_presensi_id")
+  jamKerjaId       String         @map("jam_kerja_id")
+  memberId         String         @map("member_id")
+  tanggal          DateTime       @map("tanggal")
+  waktuDatang      DateTime       @map("waktu_datang")
+  waktuSelesai     DateTime?      @map("waktu_selesai")
+  isVerified       Boolean        @map("is_verified")
+  isAktif          Boolean        @map("is_aktif")
+  terlambat        DateTime?      @map("terlambat")
+  keterangan       String?
+  createdAt        DateTime       @map("created_at")
+  updatedAt        DateTime       @map("updated_at")
+  StatusPresensi   StatusPresensi @relation(fields: [statusPresensiId], references: [statusPresensiId])
+  MesinPresensi    MesinPresensi  @relation(fields: [mesinPresensiId], references: [mesinPresensiId])
+  JamKerja         JamKerja       @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  Member           Member         @relation(fields: [memberId], references: [memberId])
+
+  @@map("presensi")
+}
+
+model Produk {
+  produkId               String                   @id @default(uuid()) @map("produk_id")
+  spbuId                 String                   @map("spbu_id")
+  namaProduk             String                   @map("nama_produk") @db.VarChar(64)
+  isAktif                Boolean                  @map("is_aktif")
+  singkatan              String?                  @db.VarChar(4)
+  Spbu                   Spbu                     @relation(fields: [spbuId], references: [spbuId])
+  DetailProduk           DetailProduk[]
+  DetailRencanaPembelian DetailRencanaPembelian[]
+  DombakTransfer         DombakTransfer[]
+  FileLo                 FileLo[]
+  Harga                  Harga[]
+  Nozzle                 Nozzle[]
+  StokInventory          StokInventory[]
+
+  @@map("produk")
+}
+
+model RandomStringBarcode {
+  randomStringBarcodeId String       @id @default(uuid()) @map("random_string_barcode_id")
+  penjadwalanId         String       @map("penjadwalan_id")
+  barcode               String       @db.VarChar(255)
+  start                 DateTime     @map("start") @db.Timestamp(0)
+  finish                DateTime     @map("finish") @db.Timestamp(0)
+  isDone                Boolean      @default(false) @map("is_done")
+  createdAt             DateTime     @map("created_at") @db.Timestamp(0)
+  updatedAt             DateTime     @map("updated_at") @db.Timestamp(0)
+  validateBarcodeId     String       @map("validate_barcode_id")
+  isActive              Boolean      @default(true) @map("is_active")
+  Penjadwalan           Penjadwalan? @relation(fields: [penjadwalanId], references: [penjadwalanId])
+
+  @@map("random_string_barcode")
+}
+
+model RencanaPembelian {
+  rencanaPembelianId     String                   @id @default(uuid()) @map("rencana_pembelian_id")
+  statusPurchaseId       String                   @map("status_purchase_id")
+  spbuId                 String                   @map("spbu_id")
+  memberId               String                   @map("member_id")
+  pembelianId            String?                  @map("pembelian_id")
+  tanggalPembelian       DateTime?                @map("tanggal_pembelian") @db.Date
+  grandTotal             Decimal?                 @map("grand_total") @db.Decimal(16, 6)
+  keterangan             String?
+  isConfirmation         Boolean                  @map("is_confirmation")
+  isDenied               Boolean                  @map("is_denied")
+  keteranganDenied       String?                  @map("keterangan_denied")
+  createdAt              DateTime                 @map("created_at") @db.Timestamp(0)
+  updatedAt              DateTime                 @map("updated_at") @db.Timestamp(0)
+  kodePembelian          String                   @unique @map("kode_pembelian") @db.VarChar(32)
+  StatusPurchase         StatusPurchase           @relation(fields: [statusPurchaseId], references: [statusPurchaseId])
+  Spbu                   Spbu                     @relation(fields: [spbuId], references: [spbuId])
+  Member                 Member                   @relation(fields: [memberId], references: [memberId])
+  DetailRencanaPembelian DetailRencanaPembelian[]
+  PajakPembelian         PajakPembelian[]
+  Pembayaran             Pembayaran[]
+
+  @@map("rencana_pembelian")
+}
+
+model SatuanUkurTinggi {
+  satuanUkurTinggiId String     @id @default(uuid()) @map("satuan_ukur_tinggi_id")
+  namaSatuan         String     @map("nama_satuan") @db.VarChar(64)
+  singkatan          String?    @db.VarChar(8)
+  Konversi           Konversi[]
+
+  @@map("satuan_ukur_tinggi")
+}
+
+model SatuanUkurVolume {
+  satuanUkurVolumeId String     @id @default(uuid()) @map("satuan_ukur_volume_id")
+  namaSatuan         String     @map("nama_satuan") @db.VarChar(64)
+  singkatan          String?    @db.VarChar(8)
+  Konversi           Konversi[]
+
+  @@map("satuan_ukur_volume")
+}
+
+model Segel {
+  segelId  String @id @default(uuid()) @map("segel_id")
+  fileLoId String @map("file_lo_id")
+  noSegel  String @map("no_segel") @db.VarChar(255)
+
+  FileLo FileLo @relation(fields: [fileLoId], references: [fileLoId])
+
+  @@map("segel")
+}
+
+model Spbu {
+  spbuId           String             @id @default(uuid()) @map("spbu_id")
+  namaSpbu         String             @map("nama_spbu") @db.VarChar(255)
+  nomorSpbu        String             @map("nomor_spbu") @db.VarChar(32)
+  tanggalPendirian DateTime           @map("tanggal_pendirian") @db.Date
+  luasLahan        Float              @map("luas_lahan")
+  satuanLuas       String             @map("satuan_luas") @db.VarChar(8)
+  alamat           String             @db.VarChar(255)
+  createdAt        DateTime           @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime           @map("updated_at") @db.Timestamp(0)
+  deletedAt        DateTime?          @map("deleted_at") @db.Timestamp(0)
+  Aset             Aset[]
+  Divisi           Divisi[]
+  Dombak           Dombak[]
+  Fasilitas        Fasilitas[]
+  JamKerja         JamKerja[]
+  Payung           Payung[]
+  Penjualan        Penjualan[]
+  PettyCash        PettyCash[]
+  Produk           Produk[]
+  RencanaPembelian RencanaPembelian[]
+  Member           SpbuMember[]
+  Tera             Tera[]
+
+  @@map("spbu")
+}
+
+model StandMeter {
+  standMeterId    String                  @id @default(uuid()) @map("stand_meter_id")
+  nozzleId        String                  @map("nozzle_id")
+  jamKerjaId      String                  @map("jam_kerja_id")
+  dombakId        String                  @map("dombak_id")
+  tanggal         DateTime                @db.Date
+  standMeterAwal  Decimal                 @map("stand_meter_awal") @db.Decimal(16, 6)
+  standMeterAkhir Decimal?                @map("stand_meter_akhir") @db.Decimal(16, 6)
+  isConfirmation  Boolean                 @map("is_confirmation")
+  createdAt       DateTime                @map("created_at") @db.Timestamp(0)
+  updatedAt       DateTime                @map("updated_at") @db.Timestamp(0)
+  urutan          Int
+  Nozzle          Nozzle                  @relation(fields: [nozzleId], references: [nozzleId])
+  JamKerja        JamKerja                @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  Dombak          Dombak                  @relation(fields: [dombakId], references: [dombakId])
+  DetailPenjualan DetailPenjualan[]
+  FileStandMeter  FileStandMeter[]
+  DokumenStok     StandMeterDokumenStok[]
+
+  @@map("stand_meter")
+}
+
+model StatusKehadiran {
+  statusKehadiranId String        @id @default(uuid()) @map("status_kehadiran_id")
+  namaKehadiran     String        @map("nama_kehadiran") @db.VarChar(64)
+  Penjadwalan       Penjadwalan[]
+
+  @@map("status_kehadiran")
+}
+
+model StatusMember {
+  statusMemberId String   @id @default(uuid()) @map("status_member_id")
+  namaStatus     String   @map("nama_status") @db.VarChar(32)
+  keterangan     String?
+  Member         Member[]
+
+  @@map("status_member")
+}
+
+model StatusPresensi {
+  statusPresensiId String     @id @default(uuid()) @map("status_presensi_id")
+  namaStatus       String     @map("nama_status") @db.VarChar(255)
+  keterangan       String?
+  createdAt        DateTime   @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime   @map("updated_at") @db.Timestamp(0)
+  Presensi         Presensi[]
+
+  @@map("status_presensi")
+}
+
+model StatusPurchase {
+  statusPurchaseId String             @id @default(uuid()) @map("status_purchase_id")
+  namaStatus       String             @map("nama_status") @db.VarChar(64)
+  deskripsi        String
+  isAktif          Boolean            @map("is_aktif")
+  createdAt        DateTime           @map("created_at") @db.Timestamp(0)
+  updatedAt        DateTime           @map("updated_at") @db.Timestamp(0)
+  RencanaPembelian RencanaPembelian[]
+
+  @@map("status_purchase")
+}
+
+model StatusSetoran {
+  statusSetoranId String      @id @default(uuid()) @map("status_setoran_id")
+  namaStatus      String      @map("nama_status") @db.VarChar(64)
+  Penjualan       Penjualan[]
+
+  @@map("status_setoran")
+}
+
+model StokInventory {
+  stokInventoryId     String                @id @default(uuid()) @map("stok_inventory_id")
+  produkId            String                @map("produk_id")
+  stok                Decimal               @db.Decimal(16, 6)
+  createdAt           DateTime              @map("created_at") @db.Timestamp(0)
+  updatedAt           DateTime              @map("updated_at") @db.Timestamp(0)
+  Produk              Produk                @relation(fields: [produkId], references: [produkId])
+  DokumenStok         DokumenStok[]
+  StokInventoryDombak StokInventoryDombak[]
+
+  @@map("stok_inventory")
+}
+
+model StokInventoryDombak {
+  stokInventoryDombakId String        @id @default(uuid()) @map("stok_inventory_dombak_id")
+  stokInventoryId       String        @map("stok_inventory_id")
+  dombakId              String        @map("dombak_id")
+  stok                  Decimal       @db.Decimal(16, 6)
+  StokInventory         StokInventory @relation(fields: [stokInventoryId], references: [stokInventoryId])
+  Dombak                Dombak        @relation(fields: [dombakId], references: [dombakId])
+
+  @@map("stok_inventory_dombak")
+}
+
+model Supir {
+  supirId      String      @id @default(uuid()) @map("supir_id")
+  pengirimanId String      @map("pengiriman_id")
+  namaSupir    String      @map("nama_supir") @db.VarChar(255)
+  createdAt    DateTime    @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime    @map("updated_at") @db.Timestamp(0)
+  Pengiriman   Pengiriman? @relation(fields: [pengirimanId], references: [pengirimanId])
+
+  @@map("supir")
+}
+
+model Tag {
+  tagId   String @id @default(uuid()) @map("tag_id")
+  namaTag String @map("nama_tag") @db.VarChar(64)
+
+  Post TagPost[]
+
+  @@map("tag")
+}
+
+model Tera {
+  teraId         String          @id @default(uuid()) @map("tera_id")
+  spbuId         String          @map("spbu_id")
+  tanggal        DateTime        @db.Date
+  grandTotal     Decimal         @map("grand_total") @db.Decimal(16, 6)
+  keterangan     String
+  createdAt      DateTime        @map("created_at") @db.Timestamp(0)
+  updatedAt      DateTime        @map("updated_at") @db.Timestamp(0)
+  Spbu           Spbu            @relation(fields: [spbuId], references: [spbuId])
+  TeraReturnFrom TeraReturn[]    @relation("TeraReturnFrom")
+  TeraReturnTo   TeraReturn[]    @relation("TeraReturnTo")
+  DetailTera     DetailTera[]
+  PettyCash      TeraPettyCash[]
+
+  @@map("tera")
+}
+
+model TeraReturn {
+  teraReturnId String @id @default(uuid()) @map("tera_return_id")
+  teraFromId   String @map("tera_from_id")
+  teraToId     String @map("tera_to_id")
+  TeraFrom     Tera   @relation("TeraReturnFrom", fields: [teraFromId], references: [teraId])
+  TeraTo       Tera   @relation("TeraReturnTo", fields: [teraToId], references: [teraId])
+
+  @@map("tera_return")
+}
+
+model TypeDokumenStok {
+  typeDokumenStokId String        @id @default(uuid()) @map("type_dokumen_stok_id")
+  typeMovement      String        @map("type_movement") @db.VarChar(64)
+  deskripsi         String
+  DokumenStok       DokumenStok[]
+
+  @@map("type_dokumen_stok")
+}
+
+model Userlogin {
+  userLoginId String    @id @default(uuid()) @map("user_login_id")
+  memberId    String    @map("member_id")
+  username    String    @db.VarChar(32)
+  password    String    @db.VarChar(255)
+  isAktif     Boolean   @map("is_aktif")
+  accessToken String?   @map("access_token") @db.VarChar(255)
+  access      String?   @db.VarChar(255)
+  lastLogin   DateTime? @map("last_login") @db.Timestamp(0)
+  createdAt   DateTime  @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime  @map("updated_at") @db.Timestamp(0)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamp(0)
+  Member      Member    @relation(fields: [memberId], references: [memberId])
+
+  @@map("userlogin")
+}
+
+model ValidateBarcode {
+  validateBarcodeId String   @id @default(uuid()) @map("validate_barcode_id")
+  isExpired         Int      @default(15) @map("is_expired")
+  isActive          Boolean  @default(false) @map("is_active")
+  createdAt         DateTime @map("created_at") @db.Timestamp(0)
+  updatedAt         DateTime @map("updated_at") @db.Timestamp(0)
+
+  @@map("validate_barcode")
+}
+
+model FailedJob {
+  id         String   @id @default(uuid()) @map("id")
+  uuid       String   @unique @map("uuid")
+  connection String   @map("connection")
+  queue      String   @map("queue")
+  payload    String   @map("payload")
+  exception  String   @map("exception")
+  failedAt   DateTime @default(now()) @map("failed_at")
+
+  @@map("failed_jobs")
+}
+
+model Migration {
+  id        Int    @id @default(autoincrement()) @map("id")
+  migration String @map("migration")
+  batch     Int    @map("batch")
+
+  @@map("migrations")
+}
+
+model PersonalAccessToken {
+  id            String    @id @default(uuid()) @map("id")
+  tokenableType String    @map("tokenable_type")
+  tokenableId   BigInt    @map("tokenable_id")
+  name          String    @map("name")
+  token         String    @unique @map("token")
+  abilities     String?   @map("abilities")
+  lastUsedAt    DateTime? @map("last_used_at")
+  expiresAt     DateTime? @map("expires_at")
+  createdAt     DateTime  @map("created_at")
+  updatedAt     DateTime  @map("updated_at")
+
+  @@map("personal_access_tokens")
+}
+
+model JabatanMember {
+  jabatan   Jabatan @relation(fields: [jabatanId], references: [jabatanId])
+  jabatanId String  @map("jabatan_id")
+  member    Member  @relation(fields: [memberId], references: [memberId])
+  memberId  String  @map("member_id")
+
+  @@id([memberId, jabatanId])
+  @@map("jabatan_member")
+}
+
+model DombakPayung {
+  dombak   Dombak @relation(fields: [dombakId], references: [dombakId])
+  dombakId String @map("dombak_id")
+  payung   Payung @relation(fields: [payungId], references: [payungId])
+  payungId String @map("payung_id")
+
+  @@id([dombakId, payungId])
+  @@map("dombak_payung")
+}
+
+model DombakTransferDokumenStok {
+  dombakTransfer   DombakTransfer @relation(fields: [dombakTransferId], references: [dombakTransferId])
+  dombakTransferId String         @map("dombak_transfer_id")
+  dokumenStok      DokumenStok    @relation(fields: [dokumenStokId], references: [dokumenStokId])
+  dokumenStokId    String         @map("dokumen_stok_id")
+
+  @@id([dombakTransferId, dokumenStokId])
+  @@map("dombak_transfer_dokumen_stok")
+}
+
+model HariJamKerja {
+  hari       Hari     @relation(fields: [hariId], references: [hariId])
+  hariId     String   @map("hari_id")
+  jamKerja   JamKerja @relation(fields: [jamKerjaId], references: [jamKerjaId])
+  jamKerjaId String   @map("jam_kerja_id")
+
+  @@id([hariId, jamKerjaId])
+  @@map("hari_jam_kerja")
+}
+
+model KategoriPost {
+  kategori   Kategori @relation(fields: [kategoriId], references: [kategoriId])
+  kategoriId String   @map("kategori_id")
+  post       Post     @relation(fields: [postId], references: [postId])
+  postId     String   @map("post_id")
+
+  @@id([kategoriId, postId])
+  @@map("kategori_post")
+}
+
+model KonversiDokumenStok {
+  konversi      Konversi    @relation(fields: [konversiId], references: [konversiId])
+  konversiId    String      @map("konversi_id")
+  dokumenStok   DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+  dokumenStokId String      @map("dokumen_stok_id")
+
+  @@id([konversiId, dokumenStokId])
+  @@map("konversi_dokumen_stok")
+}
+
+model PenerimaanPettyCash {
+  penerimaan   Penerimaan @relation(fields: [penerimaanId], references: [penerimaanId])
+  penerimaanId String     @map("penerimaan_id")
+  pettyCash    PettyCash  @relation(fields: [pettyCashId], references: [pettyCashId])
+  pettyCashId  String     @map("petty_cash_id")
+
+  @@id([penerimaanId, pettyCashId])
+  @@map("penerimaan_petty_cash")
+}
+
+model PengirimanMs2 {
+  pengiriman   Pengiriman @relation(fields: [pengirimanId], references: [pengirimanId])
+  pengirimanId String     @map("pengiriman_id")
+  ms2          Ms2        @relation(fields: [ms2Id], references: [ms2Id])
+  ms2Id        String     @map("ms2_id")
+
+  @@id([pengirimanId, ms2Id])
+  @@map("pengiriman_ms2")
+}
+
+model PenjadwalanNozzle {
+  penjadwalan   Penjadwalan @relation(fields: [penjadwalanId], references: [penjadwalanId])
+  penjadwalanId String      @map("penjadwalan_id")
+  nozzle        Nozzle      @relation(fields: [nozzleId], references: [nozzleId])
+  nozzleId      String      @map("nozzle_id")
+
+  @@id([penjadwalanId, nozzleId])
+  @@map("penjadwalan_nozzle")
+}
+
+model StandMeterDokumenStok {
+  standMeter    StandMeter  @relation(fields: [standMeterId], references: [standMeterId])
+  standMeterId  String      @map("stand_meter_id")
+  dokumenStok   DokumenStok @relation(fields: [dokumenStokId], references: [dokumenStokId])
+  dokumenStokId String      @map("dokumen_stok_id")
+
+  @@id([standMeterId, dokumenStokId])
+  @@map("stand_meter_dokumen_stok")
+}
+
+model TagPost {
+  tag    Tag    @relation(fields: [tagId], references: [tagId])
+  tagId  String @map("tag_id")
+  post   Post   @relation(fields: [postId], references: [postId])
+  postId String @map("post_id")
+
+  @@id([tagId, postId])
+  @@map("tag_post")
+}
+
+model TeraPettyCash {
+  tera        Tera      @relation(fields: [teraId], references: [teraId])
+  teraId      String    @map("tera_id")
+  pettyCash   PettyCash @relation(fields: [pettyCashId], references: [pettyCashId])
+  pettyCashId String    @map("petty_cash_id")
+
+  @@id([teraId, pettyCashId])
+  @@map("tera_petty_cash")
+}
+
+model DetailRencanaFile {
+  detailRencanaPembelian   DetailRencanaPembelian @relation(fields: [detailRencanaPembelianId], references: [detailRencanaPembelianId])
+  detailRencanaPembelianId String                 @map("detail_rencana_pembelian_id")
+  fileLo                   FileLo                 @relation(fields: [fileLoId], references: [fileLoId])
+  fileLoId                 String                 @map("file_lo_id")
+
+  @@id([detailRencanaPembelianId, fileLoId])
+  @@map("detail_rencana_file")
+}
+
+model SpbuMember {
+  spbu     Spbu   @relation(fields: [spbuId], references: [spbuId])
+  spbuId   String @map("spbu_id")
+  member   Member @relation(fields: [memberId], references: [memberId])
+  memberId String @map("member_id")
+
+  @@id([spbuId, memberId])
+  @@map("spbu_member")
+}
